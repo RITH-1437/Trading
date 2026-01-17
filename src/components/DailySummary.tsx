@@ -40,7 +40,7 @@ export const DailySummary: React.FC<DailySummaryProps> = ({
     <div className="bg-dark-card border border-dark-border rounded-lg p-5 hover:border-blue-500 
                     transition-colors duration-200 min-w-[240px]">
       <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-bold text-dark-text">Day {day.dayNumber}</h3>
+        <h3 className="text-lg font-bold text-dark-text">Trade #{day.tradeNumber}</h3>
         <span className={`text-sm font-semibold ${stats.isWin ? 'text-profit' : 'text-loss'}`}>
           {stats.isWin ? 'WIN' : 'LOSS'}
         </span>

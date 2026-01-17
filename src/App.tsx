@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
-import { TradingDay, DisciplineRules } from './types';
+import { TradingTrade, DisciplineRules } from './types';
 import { 
-  getTradingDays, 
-  saveTradingDays, 
+  getTradingTrades, 
+  saveTradingTrades, 
   getDisciplineRules, 
   saveDisciplineRules,
   clearAllData 
 } from './storage';
-import { calculateTotalBalance } from './utils';
+import { 
+  getTodayTrades, 
+  getTodayDate,
+  getStartingBalanceForNewTrade 
+} from './utils';
 import { DailyInput } from './components/DailyInput';
 import { DailySummary } from './components/DailySummary';
 import { DisciplineStatus } from './components/DisciplineStatus';
@@ -17,18 +21,18 @@ import { BalanceChart } from './components/BalanceChart';
 
 /**
  * Main App Component
- * Trading Discipline Dashboard
+ * Trading Discipline Dashboard - Multiple trades per day
  */
 function App() {
-  const [days, setDays] = useState<TradingDay[]>([]);
+  const [trades, setTrades] = useState<TradingTrade[]>([]);
   const [rules, setRules] = useState<DisciplineRules>({ maxDailyLossPercent: 6, dailyProfitTargetPercent: 16.5 });
 
   // Load data from localStorage on mount
   useEffect(() => {
     try {
-      const loadedDays = getTradingDays();
+      const loadedTrades = getTradingTrades();
       const loadedRules = getDisciplineRules();
-      setDays(loadedDays);
+      setTrades(loadedTrades);
       setRules(loadedRules);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -36,12 +40,12 @@ function App() {
     }
   }, []);
 
-  // Save days to localStorage whenever they change
+  // Save trades to localStorage whenever they change
   useEffect(() => {
-    if (days.length > 0) {
-      saveTradingDays(days);
+    if (trades.length > 0) {
+      saveTradingTrades(trades);
     }
-  }, [days]);
+  }, [trades]);
 
   // Save rules to localStorage whenever they change
   useEffect(() => {
@@ -49,26 +53,27 @@ function App() {
   }, [rules]);
 
   /**
-   * Add a new trading day
+   * Add a new trade
    */
-  const handleAddDay = (newDay: Omit<TradingDay, 'id' | 'timestamp'>) => {
-    const day: TradingDay = {
-      ...newDay,
+  const handleAddTrade = (newTrade: Omit<TradingTrade, 'id' | 'timestamp' | 'date'>) => {
+    const trade: TradingTrade = {
+      ...newTrade,
       id: Date.now().toString(),
       timestamp: Date.now(),
+      date: getTodayDate(),
     };
-    setDays([...days, day]);
+    setTrades([...trades, trade]);
   };
 
   /**
-   * Delete a specific day
+   * Delete a specific trade
    */
-  const handleDeleteDay = (dayId: string) => {
+  const handleDeleteTrade = (tradeId: string) => {
     try {
-      setDays(days.filter(d => d.id !== dayId));
+      setTrades(trades.filter(t => t.id !== tradeId));
     } catch (error) {
-      console.error('Error deleting day:', error);
-      alert('Failed to delete day. Please try again.');
+      console.error('Error deleting trade:', error);
+      alert('Failed to delete trade. Please try again.');
     }
   };
 
@@ -77,7 +82,7 @@ function App() {
    */
   const handleClearAll = () => {
     try {
-      setDays([]);
+      setTrades([]);
       clearAllData();
     } catch (error) {
       console.error('Error clearing data:', error);
@@ -92,11 +97,14 @@ function App() {
     setRules(newRules);
   };
 
-  // Calculate next day number and last balance
-  const nextDayNumber = days.length > 0 ? days[days.length - 1].dayNumber + 1 : 1;
-  const lastBalance = days.length > 0 
-    ? calculateTotalBalance(days, days.length - 1)
-    : 1008.66;
+  // Calculate next trade number and last balance
+  const nextTradeNumber = trades.length > 0 ? trades[trades.length - 1].tradeNumber + 1 : 1;
+  const lastBalance = getStartingBalanceForNewTrade(trades);
+  const todayTrades = getTodayTrades(trades);
+  const todayTradesCount = todayTrades.length;
+
+  // For compatibility, create days array (backward compatibility)
+  const days = trades;
 
   return (
     <div className="min-h-screen bg-dark-bg py-8 px-4">
@@ -119,19 +127,21 @@ function App() {
               {/* Trade Input and Rules Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <DailyInput 
-                  onAddDay={handleAddDay} 
-                  nextDayNumber={nextDayNumber}
+                  onAddTrade={handleAddTrade} 
+                  nextTradeNumber={nextTradeNumber}
                   lastBalance={lastBalance}
+                  todayTradesCount={todayTradesCount}
                 />
                 <DisciplineStatus 
-                  latestDay={days.length > 0 ? days[days.length - 1] : null}
+                  latestDay={trades.length > 0 ? trades[trades.length - 1] : null}
                   rules={rules}
                   onUpdateRules={handleUpdateRules}
+                  todayTrades={todayTrades}
                 />
               </div>
 
               {/* Balance Chart - Full Width */}
-              <BalanceChart latestDay={days.length > 0 ? days[days.length - 1] : null} />
+              <BalanceChart latestDay={trades.length > 0 ? trades[trades.length - 1] : null} />
             </div>
 
             {/* Column 2: Total Summary */}
@@ -140,19 +150,19 @@ function App() {
             </div>
           </div>
 
-          {/* Daily Summary Cards - Full Width */}
-          {days.length > 0 && (
+          {/* Trade History - Full Width */}
+          {trades.length > 0 && (
             <div className="w-full">
-              <h2 className="text-2xl font-bold text-dark-text mb-4">Daily Summary</h2>
+              <h2 className="text-2xl font-bold text-dark-text mb-4">Trade History</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {days.slice().reverse().map((day, reverseIndex) => {
-                  const actualIndex = days.length - 1 - reverseIndex;
+                {trades.slice().reverse().map((trade, reverseIndex) => {
+                  const actualIndex = trades.length - 1 - reverseIndex;
                   return (
                     <DailySummary 
-                      key={day.id}
-                      day={day}
+                      key={trade.id}
+                      day={trade}
                       dayIndex={actualIndex}
-                      allDays={days}
+                      allDays={trades}
                       rules={rules}
                     />
                   );
@@ -164,9 +174,9 @@ function App() {
           {/* History Table - Full Width */}
           <div className="w-full">
             <HistoryTable 
-              days={days}
+              days={trades}
               rules={rules}
-              onDeleteDay={handleDeleteDay}
+              onDeleteDay={handleDeleteTrade}
               onClearAll={handleClearAll}
             />
           </div>

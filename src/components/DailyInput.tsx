@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { TradingDay } from '../types';
+import { TradingTrade } from '../types';
 
-interface DailyInputProps {
-  onAddDay: (day: Omit<TradingDay, 'id' | 'timestamp'>) => void;
-  nextDayNumber: number;
+interface TradeInputProps {
+  onAddTrade: (trade: Omit<TradingTrade, 'id' | 'timestamp' | 'date'>) => void;
+  nextTradeNumber: number;
   lastBalance: number;
+  todayTradesCount: number;
 }
 
 /**
- * DailyInput Component
- * Form for adding new trading day records
+ * TradeInput Component
+ * Form for adding new trading records (multiple per day)
  */
-export const DailyInput: React.FC<DailyInputProps> = ({ 
-  onAddDay, 
-  nextDayNumber,
-  lastBalance 
+export const DailyInput: React.FC<TradeInputProps> = ({ 
+  onAddTrade, 
+  nextTradeNumber,
+  lastBalance,
+  todayTradesCount
 }) => {
   const [startingBalance, setStartingBalance] = useState(lastBalance.toString());
   const [profitLoss, setProfitLoss] = useState('');
@@ -43,8 +45,8 @@ export const DailyInput: React.FC<DailyInputProps> = ({
     }
     
     try {
-      onAddDay({
-        dayNumber: nextDayNumber,
+      onAddTrade({
+        tradeNumber: nextTradeNumber,
         startingBalance: parsedStart,
         profitLoss: parsedPL,
         note: note.trim() || undefined,
@@ -55,8 +57,8 @@ export const DailyInput: React.FC<DailyInputProps> = ({
       setProfitLoss('');
       setNote('');
     } catch (error) {
-      console.error('Error adding day:', error);
-      alert('Failed to add trading day. Please try again.');
+      console.error('Error adding trade:', error);
+      alert('Failed to add trading record. Please try again.');
     }
   };
 
@@ -67,7 +69,7 @@ export const DailyInput: React.FC<DailyInputProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2 text-gray-400">
-            Day {nextDayNumber}
+            Trade #{nextTradeNumber} <span className="text-xs text-primary">({todayTradesCount} today)</span>
           </label>
         </div>
         

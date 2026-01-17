@@ -48,7 +48,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-dark-border">
-              <th className="text-left py-2 px-2 text-gray-400 font-medium">Day</th>
+              <th className="text-left py-2 px-2 text-gray-400 font-medium">Trade</th>
               <th className="text-right py-2 px-2 text-gray-400 font-medium">Start</th>
               <th className="text-right py-2 px-2 text-gray-400 font-medium">P/L</th>
               <th className="text-right py-2 px-2 text-gray-400 font-medium">Total</th>
@@ -71,7 +71,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                            transition-colors"
                 >
                   <td className="py-2 px-2 text-dark-text font-medium">
-                    {day.dayNumber}
+                    {day.tradeNumber}
                   </td>
                   <td className="py-2 px-2 text-right text-dark-text text-xs">
                     {day.startingBalance.toFixed(0)}¢
@@ -93,7 +93,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   <td className="py-2 px-2 text-center">
                     <button
                       onClick={() => {
-                        if (window.confirm(`Delete Day ${day.dayNumber}?`)) {
+                        if (window.confirm(`Delete Trade #${day.tradeNumber}?`)) {
                           onDeleteDay(day.id);
                         }
                       }}

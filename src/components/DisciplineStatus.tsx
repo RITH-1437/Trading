@@ -1,28 +1,35 @@
 import React from 'react';
-import { TradingDay, DisciplineRules, TradingStatus } from '../types';
+import { TradingTrade, DisciplineRules, TradingStatus } from '../types';
 import { determineTradingStatus } from '../utils';
 
 interface DisciplineStatusProps {
-  latestDay: TradingDay | null;
+  latestDay: TradingTrade | null;
   rules: DisciplineRules;
   onUpdateRules: (rules: DisciplineRules) => void;
+  todayTrades: TradingTrade[];
 }
 
 /**
  * DisciplineStatus Component
  * Displays current trading status based on discipline rules
+ * Now checks against TOTAL daily P/L, not individual trades
  */
 export const DisciplineStatus: React.FC<DisciplineStatusProps> = ({ 
   latestDay, 
   rules,
-  onUpdateRules 
+  onUpdateRules,
+  todayTrades
 }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [maxLoss, setMaxLoss] = React.useState(rules.maxDailyLossPercent.toString());
   const [profitTarget, setProfitTarget] = React.useState(rules.dailyProfitTargetPercent.toString());
   
-  const currentStatus: TradingStatus = latestDay 
-    ? determineTradingStatus(latestDay.profitLoss, latestDay.startingBalance, rules)
+  // Calculate today's total P/L
+  const todayProfitLoss = todayTrades.reduce((sum, trade) => sum + trade.profitLoss, 0);
+  const todayStartBalance = todayTrades.length > 0 ? todayTrades[0].startingBalance : (latestDay?.startingBalance || 1008.66);
+  
+  const currentStatus: TradingStatus = todayTrades.length > 0
+    ? determineTradingStatus(todayProfitLoss, todayStartBalance, rules)
     : 'CONTINUE';
   
   const getStatusConfig = () => {
@@ -46,7 +53,9 @@ export const DisciplineStatus: React.FC<DisciplineStatusProps> = ({
           icon: '🟡',
           text: 'CONTINUE',
           color: 'bg-warning/10 border-warning text-warning',
-          message: 'Within limits. Trade with discipline.'
+          message: todayTrades.length > 0 
+            ? `Within limits. ${todayTrades.length} trade(s) today.`
+            : 'Within limits. Trade with discipline.'
         };
     }
   };
