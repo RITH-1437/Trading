@@ -164,14 +164,32 @@ export const DisciplineStatus: React.FC<DisciplineStatusProps> = ({
       ) : (
         <>
           <div className="space-y-3 mb-6">
+            <div className="bg-dark-bg rounded-lg p-3 mb-4">
+              <div className="text-xs text-gray-400 mb-1">Today's Starting Balance</div>
+              <div className="text-lg font-bold text-dark-text">{todayStartBalance.toFixed(2)}¢</div>
+            </div>
+            
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-400">Max Daily Loss:</span>
-              <span className="text-loss font-medium">{rules.maxDailyLossPercent}%{latestDay ? ` (-${((latestDay.startingBalance * rules.maxDailyLossPercent) / 100).toFixed(2)}¢)` : ''}</span>
+              <span className="text-loss font-medium">
+                {rules.maxDailyLossPercent}% (-{((todayStartBalance * rules.maxDailyLossPercent) / 100).toFixed(2)}¢)
+              </span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-400">Daily Target:</span>
-              <span className="text-profit font-medium">{rules.dailyProfitTargetPercent}%{latestDay ? ` (+${((latestDay.startingBalance * rules.dailyProfitTargetPercent) / 100).toFixed(2)}¢)` : ''}</span>
+              <span className="text-profit font-medium">
+                {rules.dailyProfitTargetPercent}% (+{((todayStartBalance * rules.dailyProfitTargetPercent) / 100).toFixed(2)}¢)
+              </span>
             </div>
+            
+            {todayTrades.length > 0 && (
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-dark-border mt-3">
+                <span className="text-gray-400">Today's P/L:</span>
+                <span className={`font-bold ${todayProfitLoss >= 0 ? 'text-profit' : 'text-loss'}`}>
+                  {todayProfitLoss >= 0 ? '+' : ''}{todayProfitLoss.toFixed(2)}¢
+                </span>
+              </div>
+            )}
           </div>
           
           <div className={`border-2 rounded-lg p-6 text-center ${status.color}`}>
