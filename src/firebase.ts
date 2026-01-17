@@ -2,15 +2,15 @@ import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
 // Firebase configuration
-// TODO: Replace with your Firebase project credentials
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyATMHv176Q0LA9DHR7C0e-2iTD__rNTf2c",
+  authDomain: "trading-discipline.firebaseapp.com",
+  databaseURL: "https://trading-discipline-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "trading-discipline",
+  storageBucket: "trading-discipline.firebasestorage.app",
+  messagingSenderId: "753964588555",
+  appId: "1:753964588555:web:d48b36000966976319967c2",
+  measurementId: "G-fGV0ZT2MTE"
 };
 
 // Initialize Firebase
