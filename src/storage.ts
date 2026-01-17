@@ -1,17 +1,24 @@
 import { TradingTrade, DisciplineRules } from './types';
+import { database } from './firebase';
+import { ref, set, get, remove, onValue } from 'firebase/database';
 
-const STORAGE_KEYS = {
-  TRADING_TRADES: 'trading_trades',
-  DISCIPLINE_RULES: 'discipline_rules',
+const DB_PATHS = {
+  TRADING_TRADES: 'trades',
+  DISCIPLINE_RULES: 'rules',
 };
 
 /**
- * Get all trading trades from localStorage
+ * Get all trading trades from Firebase
  */
-export const getTradingTrades = (): TradingTrade[] => {
+export const getTradingTrades = async (): Promise<TradingTrade[]> => {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.TRADING_TRADES);
-    return data ? JSON.parse(data) : [];
+    const tradesRef = ref(database, DB_PATHS.TRADING_TRADES);
+    const snapshot = await get(tradesRef);
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.values(data);
+    }
+    return [];
   } catch (error) {
     console.error('Error loading trading trades:', error);
     return [];
@@ -19,24 +26,54 @@ export const getTradingTrades = (): TradingTrade[] => {
 };
 
 /**
- * Save trading trades to localStorage
+ * Save trading trades to Firebase
  */
-export const saveTradingTrades = (trades: TradingTrade[]): void => {
+export const saveTradingTrades = async (trades: TradingTrade[]): Promise<void> => {
   try {
-    localStorage.setItem(STORAGE_KEYS.TRADING_TRADES, JSON.stringify(trades));
+    const tradesRef = ref(database, DB_PATHS.TRADING_TRADES);
+    // Convert array to object with trade IDs as keys
+    const tradesObj = trades.reduce((acc, trade) => {
+      acc[trade.id] = trade;
+      return acc;
+    }, {} as Record<string, TradingTrade>);
+    
+    await set(tradesRef, tradesObj);
   } catch (error) {
     console.error('Error saving trading trades:', error);
-    alert('Failed to save data. Storage may be full.');
+    alert('Failed to save data. Please check your connection.');
   }
 };
 
 /**
- * Get discipline rules from localStorage
+ * Subscribe to real-time trades updates
  */
-export const getDisciplineRules = (): DisciplineRules => {
+export const subscribeTradingTrades = (callback: (trades: TradingTrade[]) => void): (() => void) => {
+  const tradesRef = ref(database, DB_PATHS.TRADING_TRADES);
+  
+  const unsubscribe = onValue(tradesRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const trades = Object.values(data) as TradingTrade[];
+      callback(trades);
+    } else {
+      callback([]);
+    }
+  });
+  
+  return unsubscribe;
+};
+
+/**
+ * Get discipline rules from Firebase
+ */
+export const getDisciplineRules = async (): Promise<DisciplineRules> => {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.DISCIPLINE_RULES);
-    return data ? JSON.parse(data) : { maxDailyLossPercent: 6, dailyProfitTargetPercent: 16.5 };
+    const rulesRef = ref(database, DB_PATHS.DISCIPLINE_RULES);
+    const snapshot = await get(rulesRef);
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return { maxDailyLossPercent: 6, dailyProfitTargetPercent: 16.5 };
   } catch (error) {
     console.error('Error loading discipline rules:', error);
     return { maxDailyLossPercent: 6, dailyProfitTargetPercent: 16.5 };
@@ -44,24 +81,42 @@ export const getDisciplineRules = (): DisciplineRules => {
 };
 
 /**
- * Save discipline rules to localStorage
+ * Save discipline rules to Firebase
  */
-export const saveDisciplineRules = (rules: DisciplineRules): void => {
+export const saveDisciplineRules = async (rules: DisciplineRules): Promise<void> => {
   try {
-    localStorage.setItem(STORAGE_KEYS.DISCIPLINE_RULES, JSON.stringify(rules));
+    const rulesRef = ref(database, DB_PATHS.DISCIPLINE_RULES);
+    await set(rulesRef, rules);
   } catch (error) {
     console.error('Error saving discipline rules:', error);
-    alert('Failed to save rules. Storage may be full.');
+    alert('Failed to save rules. Please check your connection.');
   }
 };
 
 /**
- * Clear all data from localStorage
+ * Subscribe to real-time rules updates
  */
-export const clearAllData = (): void => {
+export const subscribeDisciplineRules = (callback: (rules: DisciplineRules) => void): (() => void) => {
+  const rulesRef = ref(database, DB_PATHS.DISCIPLINE_RULES);
+  
+  const unsubscribe = onValue(rulesRef, (snapshot) => {
+    if (snapshot.exists()) {
+      callback(snapshot.val());
+    } else {
+      callback({ maxDailyLossPercent: 6, dailyProfitTargetPercent: 16.5 });
+    }
+  });
+  
+  return unsubscribe;
+};
+
+/**
+ * Clear all data from Firebase
+ */
+export const clearAllData = async (): Promise<void> => {
   try {
-    localStorage.removeItem(STORAGE_KEYS.TRADING_TRADES);
-    localStorage.removeItem(STORAGE_KEYS.DISCIPLINE_RULES);
+    const tradesRef = ref(database, DB_PATHS.TRADING_TRADES);
+    await remove(tradesRef);
   } catch (error) {
     console.error('Error clearing data:', error);
     alert('Failed to clear data.');

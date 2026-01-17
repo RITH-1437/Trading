@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { TradingTrade, DisciplineRules } from './types';
 import { 
-  getTradingTrades, 
+  subscribeTradingTrades,
   saveTradingTrades, 
-  getDisciplineRules, 
+  subscribeDisciplineRules,
   saveDisciplineRules,
   clearAllData 
 } from './storage';
@@ -21,56 +21,54 @@ import { BalanceChart } from './components/BalanceChart';
 
 /**
  * Main App Component
- * Trading Discipline Dashboard - Multiple trades per day
+ * Trading Discipline Dashboard - Multiple trades per day with Firebase sync
  */
 function App() {
   const [trades, setTrades] = useState<TradingTrade[]>([]);
   const [rules, setRules] = useState<DisciplineRules>({ maxDailyLossPercent: 6, dailyProfitTargetPercent: 16.5 });
+  const [loading, setLoading] = useState(true);
 
-  // Load data from localStorage on mount
+  // Subscribe to real-time Firebase updates
   useEffect(() => {
-    try {
-      const loadedTrades = getTradingTrades();
-      const loadedRules = getDisciplineRules();
-      setTrades(loadedTrades);
-      setRules(loadedRules);
-    } catch (error) {
-      console.error('Error loading data:', error);
-      alert('Failed to load saved data. Starting fresh.');
-    }
+    // Subscribe to trades
+    const unsubscribeTrades = subscribeTradingTrades((newTrades) => {
+      setTrades(newTrades);
+      setLoading(false);
+    });
+
+    // Subscribe to rules
+    const unsubscribeRules = subscribeDisciplineRules((newRules) => {
+      setRules(newRules);
+    });
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubscribeTrades();
+      unsubscribeRules();
+    };
   }, []);
-
-  // Save trades to localStorage whenever they change
-  useEffect(() => {
-    if (trades.length > 0) {
-      saveTradingTrades(trades);
-    }
-  }, [trades]);
-
-  // Save rules to localStorage whenever they change
-  useEffect(() => {
-    saveDisciplineRules(rules);
-  }, [rules]);
 
   /**
    * Add a new trade
    */
-  const handleAddTrade = (newTrade: Omit<TradingTrade, 'id' | 'timestamp' | 'date'>) => {
+  const handleAddTrade = async (newTrade: Omit<TradingTrade, 'id' | 'timestamp' | 'date'>) => {
     const trade: TradingTrade = {
       ...newTrade,
       id: Date.now().toString(),
       timestamp: Date.now(),
       date: getTodayDate(),
     };
-    setTrades([...trades, trade]);
+    const newTrades = [...trades, trade];
+    await saveTradingTrades(newTrades);
   };
 
   /**
    * Delete a specific trade
    */
-  const handleDeleteTrade = (tradeId: string) => {
+  const handleDeleteTrade = async (tradeId: string) => {
     try {
-      setTrades(trades.filter(t => t.id !== tradeId));
+      const newTrades = trades.filter(t => t.id !== tradeId);
+      await saveTradingTrades(newTrades);
     } catch (error) {
       console.error('Error deleting trade:', error);
       alert('Failed to delete trade. Please try again.');
@@ -80,10 +78,9 @@ function App() {
   /**
    * Clear all data
    */
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     try {
-      setTrades([]);
-      clearAllData();
+      await clearAllData();
     } catch (error) {
       console.error('Error clearing data:', error);
       alert('Failed to clear all data.');
@@ -93,8 +90,8 @@ function App() {
   /**
    * Update discipline rules
    */
-  const handleUpdateRules = (newRules: DisciplineRules) => {
-    setRules(newRules);
+  const handleUpdateRules = async (newRules: DisciplineRules) => {
+    await saveDisciplineRules(newRules);
   };
 
   // Calculate next trade number and last balance
@@ -102,6 +99,17 @@ function App() {
   const lastBalance = getStartingBalanceForNewTrade(trades);
   const todayTrades = getTodayTrades(trades);
   const todayTradesCount = todayTrades.length;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <div className="text-xl text-dark-text">Loading your trading data...</div>
+        </div>
+      </div>
+    );
+  }
 
   // For compatibility, create days array (backward compatibility)
   const days = trades;
