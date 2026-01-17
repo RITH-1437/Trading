@@ -116,7 +116,7 @@ function App() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Column 1: Input, Rules, Chart */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Daily Input and Rules Row */}
+              {/* Trade Input and Rules Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <DailyInput 
                   onAddDay={handleAddDay} 

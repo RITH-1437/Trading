@@ -62,7 +62,7 @@ export const DailyInput: React.FC<DailyInputProps> = ({
 
   return (
     <div className="bg-dark-card border border-dark-border rounded-lg p-6">
-      <h2 className="text-xl font-bold mb-4 text-dark-text">Daily Input</h2>
+      <h2 className="text-xl font-bold mb-4 text-dark-text">Trade Input</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -121,7 +121,7 @@ export const DailyInput: React.FC<DailyInputProps> = ({
           className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold 
                    rounded-lg transition-colors duration-200"
         >
-          ➕ Add Day
+          ➕ Add Trade
         </button>
       </form>
     </div>
