@@ -60,12 +60,15 @@
 ## Stopping Auto-Start
 
 **Startup Folder Method:**
+
 - Remove `start_mt5_connector.bat` from Startup folder
 
 **Task Scheduler Method:**
+
 - Open Task Scheduler → Find "MT5 Connector Auto-Start" → Right-click → Disable/Delete
 
 **Registry Method:**
+
 - Open regedit → Navigate to Run key → Delete "MT5Connector" value
 
 ---
@@ -73,15 +76,18 @@
 ## Troubleshooting
 
 **Script not running:**
+
 - Check Python is in PATH: `python --version`
 - Verify .bat file path is correct
 - Check Windows Event Viewer for errors
 
 **MT5 not connecting:**
+
 - Ensure MT5 starts before the script (increase timeout in .bat file)
 - Enable "Algo Trading" in MT5
 - Check credentials in `.env` file
 
 **Multiple instances running:**
+
 - Open Task Manager → End all `python.exe` processes related to mt5_connector
 - Restart PC to ensure clean start

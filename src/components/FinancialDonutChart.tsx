@@ -18,13 +18,14 @@ export const FinancialDonutChart: React.FC<FinancialDonutChartProps> = ({
   const withdrawalPercent = total > 0 ? (withdrawals / total) * 100 : 0;
   const lossPercent = total > 0 ? (Math.abs(loss) / total) * 100 : 0;
   
-  console.log('Chart Data:', { deposits, withdrawals, loss: Math.abs(loss), total });
-  console.log('Percentages:', { depositPercent, withdrawalPercent, lossPercent });
-  
   // Calculate angles for pie segments
   const depositAngle = (depositPercent / 100) * 360;
   const withdrawalAngle = (withdrawalPercent / 100) * 360;
   const lossAngle = (lossPercent / 100) * 360;
+  
+  console.log('Chart Data:', { deposits, withdrawals, loss: Math.abs(loss), total });
+  console.log('Percentages:', { depositPercent, withdrawalPercent, lossPercent });
+  console.log('Angles:', { depositAngle, withdrawalAngle, lossAngle });
   
   // Use center of viewBox (120, 120 for 240x240 viewBox)
   const centerX = 120;
