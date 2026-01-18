@@ -47,17 +47,33 @@ export const saveTradingTrades = async (trades: TradingTrade[]): Promise<void> =
 /**
  * Subscribe to real-time trades updates
  */
-export const subscribeTradingTrades = (callback: (trades: TradingTrade[]) => void): (() => void) => {
+export const subscribeTradingTrades = (
+  callback: (trades: TradingTrade[]) => void,
+  onError?: (error: Error) => void
+): (() => void) => {
   const tradesRef = ref(database, DB_PATHS.TRADING_TRADES);
   
   const unsubscribe = onValue(tradesRef, (snapshot) => {
     if (snapshot.exists()) {
       const data = snapshot.val();
       const trades = Object.values(data) as TradingTrade[];
+      // Sort by timestamp (most recent first)
+      trades.sort((a, b) => b.timestamp - a.timestamp);
       callback(trades);
     } else {
       callback([]);
     }
+  }, (error: any) => {
+    console.error('Error loading trades:', error);
+    
+    // Handle permission denied error
+    if (error.code === 'PERMISSION_DENIED') {
+      const permissionError = new Error('Permission denied. Please publish Firebase Realtime Database rules.');
+      if (onError) onError(permissionError);
+    } else {
+      if (onError) onError(new Error(error.message || 'Failed to load trades'));
+    }
+    callback([]);
   });
   
   return unsubscribe;

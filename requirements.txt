@@ -1,0 +1,4 @@
+# MT5 Integration Requirements
+MetaTrader5>=5.0.45
+firebase-admin>=6.2.0
+python-dotenv>=1.0.0
