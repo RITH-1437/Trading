@@ -5,7 +5,8 @@ import {
   saveTradingTrades, 
   subscribeDisciplineRules,
   saveDisciplineRules,
-  clearAllData 
+  clearAllData,
+  subscribeDepositWithdrawal
 } from './storage';
 import { 
   getTodayTrades, 
@@ -27,6 +28,7 @@ function App() {
   const [trades, setTrades] = useState<TradingTrade[]>([]);
   const [displayedTrades, setDisplayedTrades] = useState<TradingTrade[]>([]);
   const [rules, setRules] = useState<DisciplineRules>({ maxDailyLossPercent: 6, dailyProfitTargetPercent: 16.5 });
+  const [depositWithdrawalTotals, setDepositWithdrawalTotals] = useState({ totalDeposits: 0, totalWithdrawals: 0 });
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -65,10 +67,17 @@ function App() {
         setRules(newRules);
       });
 
+      // Subscribe to deposit/withdrawal data
+      const unsubscribeDepositWithdrawal = subscribeDepositWithdrawal((totals) => {
+        console.log('App received deposit/withdrawal totals:', totals);
+        setDepositWithdrawalTotals(totals);
+      });
+
       // Cleanup subscriptions on unmount
       return () => {
         unsubscribeTrades();
         unsubscribeRules();
+        unsubscribeDepositWithdrawal();
       };
     } catch (err: any) {
       console.error('Unexpected error:', err);
@@ -203,7 +212,6 @@ function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <MT5Status 
                   tradesCount={trades.length}
-                  lastTradeTime={lastTradeTime}
                 />
                 <DisciplineStatus 
                   latestDay={trades.length > 0 ? trades[0] : null}
@@ -214,7 +222,12 @@ function App() {
               </div>
 
               {/* Balance Chart - Full Width */}
-              <BalanceChart latestDay={trades.length > 0 ? trades[0] : null} />
+              <BalanceChart 
+                latestDay={trades.length > 0 ? trades[0] : null}
+                allTrades={trades}
+                totalDeposits={depositWithdrawalTotals.totalDeposits}
+                totalWithdrawals={depositWithdrawalTotals.totalWithdrawals}
+              />
             </div>
 
             {/* Column 2: Total Summary */}

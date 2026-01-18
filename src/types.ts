@@ -7,6 +7,8 @@ export interface TradingTrade {
   tradeNumber: number;
   startingBalance: number;
   profitLoss: number;
+  deposit?: number; // Deposit amount (positive)
+  withdrawal?: number; // Withdrawal amount (positive)
   note?: string;
   timestamp: number; // Unix timestamp
   date: string; // YYYY-MM-DD format for grouping

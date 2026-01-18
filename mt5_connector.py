@@ -16,7 +16,7 @@ load_dotenv()
 class MT5Connector:
     def __init__(self):
         self.account = int(os.getenv('MT5_ACCOUNT', '159825187'))
-        self.password = os.getenv('MT5_PASSWORD', '@Rith1506')
+        self.password = os.getenv('MT5_PASSWORD', 'Iloveyou@096')
         self.server = os.getenv('MT5_SERVER', 'Exness-MT5Real20')
         self.last_processed_ticket = None
         self.db_ref = None
@@ -50,7 +50,7 @@ class MT5Connector:
             
         print(f"✅ Connected to MT5 account: {self.account}")
         print(f"Server: {self.server}")
-        print(f"Balance: ${account_info.balance:.2f}")
+        print(f"Balance: {account_info.balance:.2f}¢")
         print(f"Company: {account_info.company}")
         return True
     
@@ -96,6 +96,35 @@ class MT5Connector:
             return []
         
         return deals
+    
+    def get_deposit_withdrawal_history(self, days=30):
+        """Get deposit and withdrawal transactions from MT5 history"""
+        from_date = datetime.now() - timedelta(days=days)
+        to_date = datetime.now()
+        
+        deals = mt5.history_deals_get(from_date, to_date)
+        
+        if deals is None:
+            return []
+        
+        # Filter for deposit/withdrawal transactions
+        # Deal type 2 = DEAL_TYPE_BALANCE (deposits/withdrawals)
+        balance_deals = [d for d in deals if d.type == 2]
+        
+        transactions = []
+        for deal in balance_deals:
+            deal_time = datetime.fromtimestamp(deal.time)
+            transaction = {
+                'ticket': deal.ticket,
+                'amount': deal.profit,  # Positive for deposit, negative for withdrawal
+                'type': 'deposit' if deal.profit > 0 else 'withdrawal',
+                'timestamp': int(deal.time * 1000),
+                'date': deal_time.strftime('%Y-%m-%d'),
+                'comment': deal.comment if hasattr(deal, 'comment') else ''
+            }
+            transactions.append(transaction)
+        
+        return transactions
     
     def convert_deal_to_trade(self, deal, previous_balance):
         """Convert MT5 deal to your trade format"""
@@ -153,9 +182,8 @@ class MT5Connector:
         
         if not closed_positions:
             print("No closed positions found")
-            return
-        
-        print(f"Found {len(closed_positions)} closed positions")
+        else:
+            print(f"Found {len(closed_positions)} closed positions")
         
         # Get current trades from Firebase
         trades_ref = self.db_ref.child('trades')
@@ -185,6 +213,27 @@ class MT5Connector:
             print(f"✅ Synced trade #{deal.ticket}: {trade_data['symbol']} | P/L: {trade_data['profitLoss']}")
             
             new_trades_count += 1
+        
+        # Sync deposit/withdrawal transactions
+        transactions = self.get_deposit_withdrawal_history(days=30)
+        if transactions:
+            print(f"\nFound {len(transactions)} deposit/withdrawal transactions")
+            transactions_ref = self.db_ref.child('depositWithdrawal')
+            existing_transactions = transactions_ref.get() or {}
+            existing_transaction_tickets = {data.get('ticket') for data in existing_transactions.values() if isinstance(data, dict) and 'ticket' in data}
+            
+            new_transaction_count = 0
+            for trans in transactions:
+                if trans['ticket'] in existing_transaction_tickets:
+                    continue
+                
+                transactions_ref.child(str(trans['ticket'])).set(trans)
+                trans_type = "💰 Deposit" if trans['type'] == 'deposit' else "💸 Withdrawal"
+                print(f"✅ Synced {trans_type}: {abs(trans['amount']):.2f}¢ on {trans['date']}")
+                new_transaction_count += 1
+            
+            if new_transaction_count > 0:
+                print(f"✅ Synced {new_transaction_count} new transactions")
         
         # Update connection status after syncing
         self.update_connection_status(True)

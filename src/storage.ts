@@ -5,6 +5,7 @@ import { ref, set, get, remove, onValue } from 'firebase/database';
 const DB_PATHS = {
   TRADING_TRADES: 'trades',
   DISCIPLINE_RULES: 'rules',
+  DEPOSIT_WITHDRAWAL: 'depositWithdrawal',
 };
 
 /**
@@ -137,6 +138,76 @@ export const clearAllData = async (): Promise<void> => {
     console.error('Error clearing data:', error);
     alert('Failed to clear data.');
   }
+};
+
+/**
+ * Get total deposits and withdrawals from Firebase
+ */
+export const getDepositWithdrawalTotals = async (): Promise<{ totalDeposits: number; totalWithdrawals: number }> => {
+  try {
+    const transactionsRef = ref(database, DB_PATHS.DEPOSIT_WITHDRAWAL);
+    const snapshot = await get(transactionsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const transactions = Object.values(data) as any[];
+      
+      const totalDeposits = transactions
+        .filter(t => t.type === 'deposit')
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+      const totalWithdrawals = transactions
+        .filter(t => t.type === 'withdrawal')
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+      return { totalDeposits, totalWithdrawals };
+    }
+    
+    return { totalDeposits: 0, totalWithdrawals: 0 };
+  } catch (error) {
+    console.error('Error loading deposit/withdrawal data:', error);
+    return { totalDeposits: 0, totalWithdrawals: 0 };
+  }
+};
+
+/**
+ * Subscribe to real-time deposit/withdrawal updates
+ */
+export const subscribeDepositWithdrawal = (
+  callback: (totals: { totalDeposits: number; totalWithdrawals: number }) => void
+): (() => void) => {
+  const transactionsRef = ref(database, DB_PATHS.DEPOSIT_WITHDRAWAL);
+  
+  const unsubscribe = onValue(transactionsRef, (snapshot) => {
+    console.log('Deposit/Withdrawal snapshot exists:', snapshot.exists());
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const transactions = Object.values(data) as any[];
+      
+      console.log('Found transactions:', transactions.length);
+      
+      const totalDeposits = transactions
+        .filter(t => t.type === 'deposit')
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+      const totalWithdrawals = transactions
+        .filter(t => t.type === 'withdrawal')
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+      console.log('Total Deposits:', totalDeposits, 'Total Withdrawals:', totalWithdrawals);
+      
+      callback({ totalDeposits, totalWithdrawals });
+    } else {
+      console.log('No deposit/withdrawal data found');
+      callback({ totalDeposits: 0, totalWithdrawals: 0 });
+    }
+  }, (error) => {
+    console.error('Error subscribing to deposit/withdrawal:', error);
+    callback({ totalDeposits: 0, totalWithdrawals: 0 });
+  });
+  
+  return unsubscribe;
 };
 
 // Legacy exports for backward compatibility

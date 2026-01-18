@@ -37,7 +37,7 @@ Your credentials are already configured in `.env`:
 
 ```
 MT5_ACCOUNT=159825187
-MT5_PASSWORD=@Rith1506
+MT5_PASSWORD=Iloveyou@096
 MT5_SERVER=Exness-MT5Real20
 ```
 

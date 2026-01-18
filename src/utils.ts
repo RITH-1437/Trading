@@ -59,8 +59,10 @@ export const getDailySummaries = (trades: TradingTrade[]): DailySummaryData[] =>
   grouped.forEach((dayTrades, date) => {
     const sortedTrades = dayTrades.sort((a, b) => a.timestamp - b.timestamp);
     const totalProfitLoss = sortedTrades.reduce((sum, t) => sum + t.profitLoss, 0);
+    const totalDeposits = sortedTrades.reduce((sum, t) => sum + (t.deposit || 0), 0);
+    const totalWithdrawals = sortedTrades.reduce((sum, t) => sum + (t.withdrawal || 0), 0);
     const startingBalance = sortedTrades[0].startingBalance;
-    const endingBalance = startingBalance + totalProfitLoss;
+    const endingBalance = startingBalance + totalProfitLoss + totalDeposits - totalWithdrawals;
     
     summaries.push({
       date,
@@ -84,11 +86,13 @@ export const calculateTotalBalance = (trades: TradingTrade[], currentIndex: numb
   }
   
   if (currentIndex === 0) {
-    return trades[0].startingBalance + trades[0].profitLoss;
+    const trade = trades[0];
+    return trade.startingBalance + trade.profitLoss + (trade.deposit || 0) - (trade.withdrawal || 0);
   }
   
   const previousTotal = calculateTotalBalance(trades, currentIndex - 1);
-  return previousTotal + trades[currentIndex].profitLoss;
+  const currentTrade = trades[currentIndex];
+  return previousTotal + currentTrade.profitLoss + (currentTrade.deposit || 0) - (currentTrade.withdrawal || 0);
 };
 
 /**

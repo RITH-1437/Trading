@@ -4,7 +4,6 @@ import { database } from '../firebase';
 
 interface MT5StatusProps {
   tradesCount: number;
-  lastTradeTime?: number;
 }
 
 interface MT5StatusData {
@@ -19,9 +18,10 @@ interface MT5StatusData {
  * MT5 Status Component
  * Shows connection status and sync info
  */
-export const MT5Status: React.FC<MT5StatusProps> = ({ tradesCount, lastTradeTime }) => {
+export const MT5Status: React.FC<MT5StatusProps> = ({ tradesCount }) => {
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'syncing'>('disconnected');
   const [mt5Status, setMT5Status] = useState<MT5StatusData | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     // Listen to MT5 status from Firebase
@@ -43,10 +43,21 @@ export const MT5Status: React.FC<MT5StatusProps> = ({ tradesCount, lastTradeTime
       } else {
         setConnectionStatus('disconnected');
       }
+      
+      setIsRefreshing(false);
     });
 
     return () => unsubscribe();
   }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    // Simulate refresh - in reality, this would trigger MT5 connector to reconnect
+    // You can extend this to call a Firebase function or API endpoint
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  };
 
   const getStatusColor = () => {
     switch (connectionStatus) {
@@ -125,6 +136,18 @@ export const MT5Status: React.FC<MT5StatusProps> = ({ tradesCount, lastTradeTime
             </div>
           </div>
         </div>
+
+        {/* Refresh Button */}
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="w-full mt-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 
+                   disabled:cursor-not-allowed text-white font-semibold rounded-lg 
+                   transition-colors duration-200 flex items-center justify-center gap-2"
+        >
+          <span className={isRefreshing ? 'animate-spin' : ''}>🔄</span>
+          {isRefreshing ? 'Refreshing...' : 'Refresh MT5 Connection'}
+        </button>
       </div>
     </div>
   );

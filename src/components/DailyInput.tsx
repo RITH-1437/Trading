@@ -20,6 +20,8 @@ export const DailyInput: React.FC<TradeInputProps> = ({
 }) => {
   const [startingBalance, setStartingBalance] = useState(lastBalance.toString());
   const [profitLoss, setProfitLoss] = useState('');
+  const [deposit, setDeposit] = useState('');
+  const [withdrawal, setWithdrawal] = useState('');
   const [note, setNote] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -27,9 +29,21 @@ export const DailyInput: React.FC<TradeInputProps> = ({
     
     const parsedStart = parseFloat(startingBalance);
     const parsedPL = parseFloat(profitLoss);
+    const parsedDeposit = deposit ? parseFloat(deposit) : undefined;
+    const parsedWithdrawal = withdrawal ? parseFloat(withdrawal) : undefined;
     
     if (isNaN(parsedStart) || isNaN(parsedPL)) {
       alert('Please enter valid numbers');
+      return;
+    }
+    
+    if (parsedDeposit && isNaN(parsedDeposit)) {
+      alert('Please enter a valid deposit amount');
+      return;
+    }
+    
+    if (parsedWithdrawal && isNaN(parsedWithdrawal)) {
+      alert('Please enter a valid withdrawal amount');
       return;
     }
     
@@ -49,12 +63,17 @@ export const DailyInput: React.FC<TradeInputProps> = ({
         tradeNumber: nextTradeNumber,
         startingBalance: parsedStart,
         profitLoss: parsedPL,
+        deposit: parsedDeposit,
+        withdrawal: parsedWithdrawal,
         note: note.trim() || undefined,
       });
       
-      // Reset form but keep starting balance as last total
-      setStartingBalance((parsedStart + parsedPL).toString());
+      // Calculate new balance: starting + P/L + deposit - withdrawal
+      const newBalance = parsedStart + parsedPL + (parsedDeposit || 0) - (parsedWithdrawal || 0);
+      setStartingBalance(newBalance.toString());
       setProfitLoss('');
+      setDeposit('');
+      setWithdrawal('');
       setNote('');
     } catch (error) {
       console.error('Error adding trade:', error);
@@ -102,6 +121,38 @@ export const DailyInput: React.FC<TradeInputProps> = ({
                      text-dark-text focus:outline-none focus:border-blue-500"
             required
           />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2 text-green-400">
+              Deposit (¢)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={deposit}
+              onChange={(e) => setDeposit(e.target.value)}
+              placeholder="Optional"
+              className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg 
+                       text-dark-text focus:outline-none focus:border-green-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-2 text-red-400">
+              Withdrawal (¢)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={withdrawal}
+              onChange={(e) => setWithdrawal(e.target.value)}
+              placeholder="Optional"
+              className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg 
+                       text-dark-text focus:outline-none focus:border-red-500"
+            />
+          </div>
         </div>
         
         <div>

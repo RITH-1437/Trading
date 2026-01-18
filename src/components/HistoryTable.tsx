@@ -51,6 +51,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               <th className="text-left py-2 px-2 text-gray-400 font-medium">Trade</th>
               <th className="text-right py-2 px-2 text-gray-400 font-medium">Start</th>
               <th className="text-right py-2 px-2 text-gray-400 font-medium">P/L</th>
+              <th className="text-right py-2 px-2 text-gray-400 font-medium">Dep</th>
+              <th className="text-right py-2 px-2 text-gray-400 font-medium">With</th>
               <th className="text-right py-2 px-2 text-gray-400 font-medium">Total</th>
               <th className="text-right py-2 px-2 text-gray-400 font-medium">DD</th>
               <th className="text-center py-2 px-2 text-gray-400 font-medium">Status</th>
@@ -80,6 +82,12 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     day.profitLoss >= 0 ? 'text-profit' : 'text-loss'
                   }`}>
                     {formatCurrency(day.profitLoss)}
+                  </td>
+                  <td className="py-2 px-2 text-right text-green-400 text-xs">
+                    {day.deposit ? `+${day.deposit.toFixed(0)}¢` : '-'}
+                  </td>
+                  <td className="py-2 px-2 text-right text-red-400 text-xs">
+                    {day.withdrawal ? `-${day.withdrawal.toFixed(0)}¢` : '-'}
                   </td>
                   <td className="py-2 px-2 text-right text-dark-text font-bold text-xs">
                     {stats.totalBalance.toFixed(0)}¢
