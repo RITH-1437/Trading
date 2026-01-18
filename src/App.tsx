@@ -9,9 +9,7 @@ import {
   subscribeDepositWithdrawal
 } from './storage';
 import { 
-  getTodayTrades, 
-  getTodayDate,
-  getStartingBalanceForNewTrade 
+  getTodayTrades
 } from './utils';
 import { MT5Status } from './components/MT5Status';
 import { DailySummary } from './components/DailySummary';
@@ -120,9 +118,6 @@ function App() {
 
   // Calculate today's trades for discipline status
   const todayTrades = getTodayTrades(trades);
-
-  // Get last trade timestamp for MT5 status
-  const lastTradeTime = trades.length > 0 ? trades[trades.length - 1].timestamp : undefined;
 
   // Handle show all trades
   const handleShowAllTrades = () => {

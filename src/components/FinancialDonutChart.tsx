@@ -48,11 +48,6 @@ export const FinancialDonutChart: React.FC<FinancialDonutChartProps> = ({
     };
   };
   
-  // Calculate middle angles for each segment
-  const depositMidAngle = depositAngle / 2;
-  const withdrawalMidAngle = depositAngle + (withdrawalAngle / 2);
-  const lossMidAngle = depositAngle + withdrawalAngle + (lossAngle / 2);
-  
   return (
     <div className="relative w-40 h-40 mx-auto">
       <svg className="w-full h-full" viewBox="0 0 240 240">

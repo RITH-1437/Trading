@@ -32,12 +32,6 @@ export const BalanceChart: React.FC<BalanceChartProps> = ({
     );
   }
 
-  const profit = latestDay.profitLoss;
-  const deposit = latestDay.deposit || 0;
-  const withdrawal = latestDay.withdrawal || 0;
-  const balance = latestDay.startingBalance + latestDay.profitLoss + deposit - withdrawal;
-  const profitPercent = (profit / latestDay.startingBalance) * 100;
-  
   // Calculate total profit/loss from all trades
   const totalProfitLoss = allTrades.reduce((sum, trade) => sum + trade.profitLoss, 0);
 
